@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lernquiz · Modul 1 · isb</title>
+  <style>
+    :root {
+      --green: #2e7d4f;
+      --green-light: #eef8f1;
+      --blue: #1e5fa8;
+      --blue-light: #eef4fc;
+      --dark: #1a1a1a;
+      --paper: #fefdf7;
+      --bg: #e8e4d8;
+      --border: #d0c8b0;
+      --correct-bg: #eef8f1;
+      --correct-border: #a8d5b8;
+      --correct-text: #1a5c33;
+      --wrong-bg: #fdf0ee;
+      --wrong-border: #e8b5ae;
+      --wrong-text: #922b21;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: Georgia, 'Times New Roman', serif;
+      background: var(--bg);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 28px 16px 48px;
+    }
+    .card {
+      background: var(--paper);
+      box-shadow: 2px 2px 0 #d0c8b0, 6px 6px 28px rgba(0,0,0,0.16);
+      max-width: 660px;
+      width: 100%;
+    }
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    /* ── START ── */
+    .start { padding: 52px 44px; text-align: center; }
+    .start h1 {
+      font-size: 23px; font-weight: bold; color: var(--dark);
+      letter-spacing: 0.5px; margin-bottom: 6px;
+    }
+    .start .sub {
+      font-size: 12px; color: #999; font-style: italic; margin-bottom: 36px;
+    }
+    .badges {
+      display: flex; gap: 14px; justify-content: center;
+      margin-bottom: 40px; flex-wrap: wrap;
+    }
+    .badge {
+      padding: 9px 18px; border-radius: 6px;
+      font-size: 11px; font-family: Arial, sans-serif;
+      font-weight: bold; letter-spacing: 0.5px;
+    }
+    .bg { background: var(--green-light); color: var(--green); border: 1.5px solid var(--green); }
+    .bb { background: var(--blue-light);  color: var(--blue);  border: 1.5px solid var(--blue); }
+    .btn-primary {
+      background: var(--dark); color: white; border: none;
+      padding: 14px 40px; font-size: 14px;
+      font-family: Arial, sans-serif; font-weight: bold;
+      letter-spacing: 1px; cursor: pointer; border-radius: 2px;
+      transition: opacity .15s;
+    }
+    .btn-primary:hover { opacity: .82; }
+    .start-meta { margin-top: 20px; font-size: 11px; color: #bbb; font-style: italic; }
+
+    /* ── QUIZ ── */
+    .quiz-top {
+      padding: 22px 32px 0;
+      display: flex; align-items: center;
+      justify-content: space-between; gap: 16px;
+    }
+    .prog-wrap { flex: 1; }
+    .prog-label { font-size: 11px; color: #999; font-family: Arial, sans-serif; margin-bottom: 5px; }
+    .prog-bar { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+    .prog-fill { height: 100%; background: var(--dark); border-radius: 2px; transition: width .4s ease; }
+    .score-lbl { font-family: Arial, sans-serif; font-size: 13px; font-weight: bold; color: var(--dark); white-space: nowrap; }
+
+    .quiz-body { padding: 26px 32px 38px; }
+    .model-tag {
+      display: inline-block; font-size: 10px;
+      font-family: Arial, sans-serif; font-weight: bold;
+      letter-spacing: 1px; padding: 3px 11px;
+      border-radius: 20px; margin-bottom: 14px;
+    }
+    .tag-g { background: var(--green-light); color: var(--green); }
+    .tag-b { background: var(--blue-light);  color: var(--blue); }
+    .q-text {
+      font-size: 16.5px; line-height: 1.55;
+      color: var(--dark); margin-bottom: 22px; font-style: italic;
+    }
+    .options { display: flex; flex-direction: column; gap: 9px; }
+    .opt {
+      background: white; border: 1.8px solid var(--border);
+      border-radius: 6px; padding: 13px 16px;
+      text-align: left; font-size: 13.5px;
+      font-family: Georgia, serif; color: #333;
+      cursor: pointer; transition: border-color .12s, background .12s, opacity .18s;
+      display: flex; align-items: flex-start; gap: 11px;
+    }
+    .opt:hover:not(:disabled) { border-color: #aaa; background: #fafaf8; }
+    .opt-letter {
+      font-family: Arial, sans-serif; font-size: 10px;
+      font-weight: bold; color: #bbb; min-width: 16px; padding-top: 2px; flex-shrink: 0;
+    }
+    .opt.correct { border-color: var(--green); background: var(--correct-bg); }
+    .opt.correct .opt-letter { color: var(--green); }
+    .opt.wrong   { border-color: #c0392b; background: var(--wrong-bg); }
+    .opt.wrong   .opt-letter { color: #c0392b; }
+    .opt.dim     { opacity: .38; }
+    .opt:disabled { cursor: default; }
+
+    .feedback {
+      margin-top: 18px; padding: 13px 16px; border-radius: 6px;
+      font-size: 12.5px; line-height: 1.55;
+      font-family: Arial, sans-serif; display: none;
+    }
+    .feedback.show { display: block; }
+    .feedback.fb-ok  { background: var(--correct-bg); border: 1px solid var(--correct-border); color: var(--correct-text); }
+    .feedback.fb-err { background: var(--wrong-bg);   border: 1px solid var(--wrong-border);   color: var(--wrong-text); }
+    .fb-head { font-weight: bold; margin-bottom: 3px; }
+
+    .btn-next {
+      margin-top: 22px; background: var(--dark); color: white;
+      border: none; padding: 11px 28px;
+      font-size: 13px; font-family: Arial, sans-serif;
+      font-weight: bold; letter-spacing: .5px;
+      cursor: pointer; border-radius: 2px;
+      display: none; transition: opacity .15s;
+    }
+    .btn-next:hover { opacity: .82; }
+    .btn-next.show { display: inline-block; }
+
+    /* ── RESULTS ── */
+    .results { padding: 52px 44px; text-align: center; }
+    .res-label { font-size: 11px; color: #aaa; font-family: Arial, sans-serif; letter-spacing: 2px; }
+    .res-score { font-size: 68px; font-weight: bold; color: var(--dark); line-height: 1; margin: 12px 0 4px; }
+    .res-max   { font-size: 15px; color: #888; margin-bottom: 20px; }
+    .stars     { font-size: 32px; margin-bottom: 20px; }
+    .res-text  {
+      font-size: 14px; color: #555; font-style: italic;
+      max-width: 420px; margin: 0 auto 28px; line-height: 1.65;
+    }
+    .breakdown {
+      max-width: 300px; margin: 0 auto 32px;
+      font-size: 13px; font-family: Arial, sans-serif;
+      border-top: 1px solid var(--border);
+    }
+    .brow {
+      display: flex; justify-content: space-between;
+      padding: 8px 0; border-bottom: 1px solid var(--border); color: #555;
+    }
+    .brow span:last-child { font-weight: bold; color: var(--dark); }
+    .res-footer { margin-top: 32px; font-size: 10px; color: #ccc; font-style: italic; }
+
+    @media(max-width:480px){
+      body { padding: 12px 8px 36px; }
+      .start, .results { padding: 36px 20px; }
+      .quiz-top { padding: 16px 20px 0; }
+      .quiz-body { padding: 20px 20px 30px; }
+      .q-text { font-size: 15px; }
+      .res-score { font-size: 52px; }
+    }
+  </style>
+</head>
+<body>
+<div class="card">
+
+  <!-- START -->
+  <div class="screen active" id="s-start">
+    <div class="start">
+      <h1>Lernquiz · Modul 1</h1>
+      <p class="sub">isb · Systemische OE, Change &amp; Transformation I · 2026</p>
+      <div class="badges">
+        <span class="badge bg">Verantwortungsmodell</span>
+        <span class="badge bb">Phasen-Ebenen-Modell</span>
+      </div>
+      <button class="btn-primary" onclick="startGame()">SPIELEN STARTEN</button>
+      <p class="start-meta">12 Fragen · ca. 5 Minuten</p>
+    </div>
+  </div>
+
+  <!-- QUIZ -->
+  <div class="screen" id="s-quiz">
+    <div class="quiz-top">
+      <div class="prog-wrap">
+        <div class="prog-label" id="prog-label">Frage 1 von 12</div>
+        <div class="prog-bar"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+      </div>
+      <div class="score-lbl" id="score-lbl">0 Pkt.</div>
+    </div>
+    <div class="quiz-body">
+      <div class="model-tag" id="model-tag"></div>
+      <div class="q-text" id="q-text"></div>
+      <div class="options" id="options"></div>
+      <div class="feedback" id="feedback">
+        <div class="fb-head" id="fb-head"></div>
+        <div id="fb-exp"></div>
+      </div>
+      <button class="btn-next" id="btn-next" onclick="next()">Weiter →</button>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="screen" id="s-results">
+    <div class="results">
+      <p class="res-label">ERGEBNIS</p>
+      <div class="res-score" id="res-score">0</div>
+      <div class="res-max"   id="res-max"></div>
+      <div class="stars"     id="stars"></div>
+      <p class="res-text"    id="res-text"></p>
+      <div class="breakdown" id="breakdown"></div>
+      <button class="btn-primary" onclick="restart()">NOCHMAL SPIELEN</button>
+      <p class="res-footer">
+        Schmid/Messmer 2004 · Freud/Watzlawick: Eisberg-Modell · Carl Rogers/Metaplan
+      </p>
+    </div>
+  </div>
+
+</div>
+<script>
+const Q = [
+  // ── VERANTWORTUNGSMODELL ──
+  {
+    m:"Verantwortungsmodell", c:"g",
+    q:"Welche vier Dimensionen beschreibt das Verantwortungsmodell nach Schmid/Messmer?",
+    o:["Wollen, Können, Dürfen, Müssen",
+       "Denken, Fühlen, Handeln, Reflektieren",
+       "Planen, Durchführen, Prüfen, Anpassen",
+       "Inhalte, Prozess, Emotion, Beziehung"],
+    a:0,
+    e:"WOLLEN und KÖNNEN werden der Person zugeordnet, DÜRFEN und MÜSSEN der Organisation – alle vier fließen im VERANTWORTEN zusammen."
+  },
+  {
+    m:"Verantwortungsmodell", c:"g",
+    q:"Ein Mitarbeiter hat Kompetenz und Bereitschaft – bekommt aber kein Mandat und keine Ressourcen. Welche Dimension fehlt?",
+    o:["WOLLEN","KÖNNEN","DÜRFEN","MÜSSEN"],
+    a:2,
+    e:"DÜRFEN beschreibt die Erlaubnis zur Antwort: Ressourcen, Ausstattung und das Mandat, das die Organisation vergibt."
+  },
+  {
+    m:"Verantwortungsmodell", c:"g",
+    q:"Welche Reflexionsfrage gehört zur Dimension KÖNNEN?",
+    o:["Gibt mir das System das Mandat und die Autonomie?",
+       "Bin ich fachlich/persönlich in der Lage, diese Antworten zu geben?",
+       "Entspricht es meinen Absichten und Werten?",
+       "Gibt es eine klare Struktur oder Verpflichtung?"],
+    a:1,
+    e:"KÖNNEN fragt nach der Fähigkeit zur Antwort: Habe ich die Qualifikation und Kompetenz für das, was gefordert ist?"
+  },
+  {
+    m:"Verantwortungsmodell", c:"g",
+    q:"Was bedeutet 'komplementäre Verantwortung' im Modell?",
+    o:["Beide Seiten tragen exakt 50 % Verantwortung",
+       "Verantwortung liegt allein beim Individuum",
+       "Verantwortung ist ein dynamisches Beziehungsgefüge, kein individueller Zustand",
+       "Die Organisation trägt immer die Hauptverantwortung"],
+    a:2,
+    e:"Wenn die Organisation DÜRFEN oder MÜSSEN nicht klar definiert, kann das Individuum im WOLLEN und KÖNNEN blockiert sein – Verantwortung entsteht im Zusammenspiel."
+  },
+  {
+    m:"Verantwortungsmodell", c:"g",
+    q:"Welche Dimensionen werden der ORGANISATION zugeordnet?",
+    o:["WOLLEN und KÖNNEN","DÜRFEN und MÜSSEN","WOLLEN und MÜSSEN","KÖNNEN und DÜRFEN"],
+    a:1,
+    e:"Die Organisation setzt den Rahmen: DÜRFEN (Erlaubnis, Ressourcen) und MÜSSEN (Zuständigkeit, Pflicht)."
+  },
+  {
+    m:"Verantwortungsmodell", c:"g",
+    q:"Eine Führungskraft sagt: 'Der Mitarbeiter zieht nicht mit.' Was sagt das Verantwortungsmodell dazu?",
+    o:["Die Führungskraft hat recht – Verantwortung liegt beim Individuum",
+       "Das ist ein rein persönliches Problem des Mitarbeiters",
+       "Zuerst prüfen: Sind DÜRFEN und MÜSSEN von der Organisation klar gesetzt?",
+       "Der Mitarbeiter sollte mehr Eigeninitiative zeigen"],
+    a:2,
+    e:"Komplementäre Verantwortung: bevor man den MA verantwortlich macht, klären, welchen Beitrag das System leistet – Mandat, Klarheit, Ressourcen."
+  },
+  {
+    m:"Verantwortungsmodell", c:"g",
+    q:"VERANTWORTEN im Zentrum des Modells bedeutet …",
+    o:["Entscheidungen treffen und delegieren",
+       "Antworten geben",
+       "Ziele setzen und verfolgen",
+       "Kontrolle ausüben"],
+    a:1,
+    e:"Das Wort 'Verantworten' enthält 'Antworten': Verantwortung heißt, auf eine Situation eine Antwort geben zu können – und zu wollen, zu dürfen, zu können und zu müssen."
+  },
+  {
+    m:"Verantwortungsmodell", c:"g",
+    q:"Was beschreibt die Dimension MÜSSEN?",
+    o:["Werte und innere Absichten",
+       "Fachliche Qualifikation",
+       "Ressourcen und Ausstattung",
+       "Zuständigkeit und Pflicht – die Verpflichtung zur Antwort"],
+    a:3,
+    e:"MÜSSEN bezeichnet strukturelle Zuständigkeit: Was bin ich verpflichtet zu tun? Welche Pflichten gibt die Organisation vor?"
+  },
+
+  // ── PHASEN-EBENEN-MODELL ──
+  {
+    m:"Phasen-Ebenen-Modell", c:"b",
+    q:"In welcher Reihenfolge durchläuft ein Gespräch die fünf Phasen?",
+    o:["Kontakt → Orientierung → Themen-Bearbeitung → Zusammenfassung → Abschluss",
+       "Orientierung → Kontakt → Themen-Bearbeitung → Abschluss → Zusammenfassung",
+       "Kontakt → Themen-Bearbeitung → Orientierung → Zusammenfassung → Abschluss",
+       "Themen-Bearbeitung → Orientierung → Kontakt → Zusammenfassung → Abschluss"],
+    a:0,
+    e:"Das Gespräch beginnt auf der Emotionsebene (Kontakt), steigt über Prozess (Orientierung) zur Inhaltsebene (Themen-Bearbeitung) und kehrt am Ende zurück."
+  },
+  {
+    m:"Phasen-Ebenen-Modell", c:"b",
+    q:"Auf welcher Ebene liegt die Phase THEMEN-BEARBEITUNG?",
+    o:["Emotionen/Beziehung","Prozess","Inhalte","Struktur"],
+    a:2,
+    e:"THEMEN-BEARBEITUNG ist die Hauptarbeitsphase auf der Inhaltsebene – oberhalb des Eisbergs, im sichtbaren Bereich."
+  },
+  {
+    m:"Phasen-Ebenen-Modell", c:"b",
+    q:"Was fragt man in der ORIENTIERUNGSPHASE?",
+    o:["Wie geht es dir? Was bringst du mit?",
+       "Was ist dein Anliegen? Was soll am Ende erreicht sein?",
+       "Was haben wir beschlossen? Stimmt der Fahrplan?",
+       "Check-out – wie gehen wir heute auseinander?"],
+    a:1,
+    e:"Die Orientierungsphase klärt Anliegen und Ziel, bevor in die inhaltliche Arbeit gegangen wird – sie liegt auf der Prozessebene."
+  },
+  {
+    m:"Phasen-Ebenen-Modell", c:"b",
+    q:"Was symbolisiert der Eisberg im Modell?",
+    o:["Die Schwere des Problems",
+       "Die Trennung von sichtbaren Inhalten und tiefer liegenden Prozess-/Emotionsebenen",
+       "Den Widerstand des Gesprächspartners",
+       "Die Dauer des Gesprächs"],
+    a:1,
+    e:"Der Eisberg trennt das Explizite (Inhalte, über der Linie) vom weniger Sichtbaren (Prozess und Emotionen darunter) – beides ist wirksam."
+  },
+  {
+    m:"Phasen-Ebenen-Modell", c:"b",
+    q:"Was bedeutet 'Steuerung bei Störungen' im Modell?",
+    o:["Das Gespräch abbrechen und neu starten",
+       "Fragen: 'Auf welcher Ebene hängen wir gerade?' und gezielt darauf eingehen",
+       "Den Gesprächspartner direkt konfrontieren",
+       "Zum nächsten Thema übergehen"],
+    a:1,
+    e:"Als Berater:in behalte ich die Prozessverantwortung. Wenn es stockt: bewusst benennen, auf welcher Ebene wir hängen – Inhalt, Prozess oder Beziehung."
+  },
+  {
+    m:"Phasen-Ebenen-Modell", c:"b",
+    q:"Was gehört zur ABSCHLUSSPHASE?",
+    o:["Ziele und Anliegen klären",
+       "Themen inhaltlich bearbeiten",
+       "Check-out, kurzes Feedback, Wie gehen wir heute auseinander?",
+       "Kontakt aufbauen und ankommen"],
+    a:2,
+    e:"Die Abschlussphase kehrt auf die Emotionsebene zurück: bewusstes Abrunden, Feedback und Klärung, wie man auseinandergeht."
+  },
+  {
+    m:"Phasen-Ebenen-Modell", c:"b",
+    q:"Wann wechselt man von der Emotionsebene zur Prozessebene?",
+    o:["Nach exakt 5 Minuten",
+       "Wenn der Klient es aktiv einfordert",
+       "Wenn die Beziehung stabil genug ist",
+       "Immer direkt nach der Begrüßung"],
+    a:2,
+    e:"Timing des Themenwechsels: Wann ist die Beziehung stabil genug für den Prozess? Wann ist der Prozess klar genug für den Inhalt? Das ist eine bewusste Steuerungsentscheidung."
+  },
+  {
+    m:"Phasen-Ebenen-Modell", c:"b",
+    q:"Was macht das Modell zur 'Landkarte' oder 'Navi' für Gespräche?",
+    o:["Es gibt einen festen Gesprächsablauf vor",
+       "Es zeigt jederzeit, wo man steht und ermöglicht bewusstes, strukturiertes Steuern",
+       "Es navigiert automatisch durch das Gespräch",
+       "Es misst die Qualität von Gesprächen"],
+    a:1,
+    e:"Prozess nicht dem Zufall überlassen – jederzeit bewusst, strukturiert, zielführend lenken. Das Modell ist Orientierung, kein starres Skript."
+  },
+];
+
+let game=[], idx=0, score=0, answered=false;
+let okBy={}, totBy={};
+
+function shuffle(a){
+  const b=[...a];
+  for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}
+  return b;
+}
+
+function prepQuestion(q){
+  const order=shuffle([0,1,2,3]);
+  return {...q, opts:order.map(i=>q.o[i]), ans:order.indexOf(q.a)};
+}
+
+function startGame(){
+  const va=shuffle(Q.filter(x=>x.m==="Verantwortungsmodell")).slice(0,6);
+  const pa=shuffle(Q.filter(x=>x.m==="Phasen-Ebenen-Modell")).slice(0,6);
+  game=shuffle([...va,...pa]).map(prepQuestion);
+  idx=0; score=0; answered=false;
+  okBy={"Verantwortungsmodell":0,"Phasen-Ebenen-Modell":0};
+  totBy={"Verantwortungsmodell":0,"Phasen-Ebenen-Modell":0};
+  show('s-quiz');
+  render();
+}
+
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function render(){
+  const q=game[idx];
+  answered=false;
+  const total=game.length;
+  document.getElementById('prog-label').textContent=`Frage ${idx+1} von ${total}`;
+  document.getElementById('prog-fill').style.width=`${idx/total*100}%`;
+  document.getElementById('score-lbl').textContent=`${score} Pkt.`;
+  const tag=document.getElementById('model-tag');
+  tag.textContent=q.m; tag.className='model-tag '+(q.c==='g'?'tag-g':'tag-b');
+  document.getElementById('q-text').textContent=q.q;
+  const letters=['A','B','C','D'];
+  const box=document.getElementById('options');
+  box.innerHTML='';
+  q.opts.forEach((txt,i)=>{
+    const b=document.createElement('button');
+    b.className='opt';
+    b.innerHTML=`<span class="opt-letter">${letters[i]}</span><span>${txt}</span>`;
+    b.onclick=()=>pick(i,q);
+    box.appendChild(b);
+  });
+  const fb=document.getElementById('feedback');
+  fb.className='feedback';
+  const bn=document.getElementById('btn-next');
+  bn.className='btn-next';
+  totBy[q.m]++;
+}
+
+function pick(sel,q){
+  if(answered)return;
+  answered=true;
+  const btns=document.querySelectorAll('.opt');
+  btns.forEach((b,i)=>{
+    b.disabled=true;
+    if(i===q.ans) b.classList.add('correct');
+    else if(i===sel) b.classList.add('wrong');
+    else b.classList.add('dim');
+  });
+  const ok=sel===q.ans;
+  if(ok){score+=10; okBy[q.m]++;}
+  document.getElementById('score-lbl').textContent=`${score} Pkt.`;
+  const fb=document.getElementById('feedback');
+  fb.className='feedback show '+(ok?'fb-ok':'fb-err');
+  document.getElementById('fb-head').textContent=ok?'✓ Richtig!':'✗ Nicht ganz.';
+  document.getElementById('fb-exp').textContent=q.e;
+  document.getElementById('btn-next').className='btn-next show';
+}
+
+function next(){
+  idx++;
+  if(idx>=game.length) results();
+  else render();
+}
+
+function results(){
+  document.getElementById('prog-fill').style.width='100%';
+  show('s-results');
+  const max=game.length*10, pct=Math.round(score/max*100);
+  document.getElementById('res-score').textContent=score;
+  document.getElementById('res-max').textContent=`von ${max} Punkten · ${pct} %`;
+  let stars,text;
+  if(pct>=90){stars='⭐⭐⭐';text='Ausgezeichnet! Du hast die Modelle sehr sicher verinnerlicht.';}
+  else if(pct>=70){stars='⭐⭐';text='Gut gemacht! Die wesentlichen Konzepte sitzen. Noch ein Durchgang festigt das Wissen.';}
+  else{stars='⭐';text='Guter Start! Die Modelle brauchen etwas Wiederholung – einfach nochmal spielen.';}
+  document.getElementById('stars').textContent=stars;
+  document.getElementById('res-text').textContent=text;
+  const va_ok=okBy['Verantwortungsmodell'], va_tot=totBy['Verantwortungsmodell'];
+  const pa_ok=okBy['Phasen-Ebenen-Modell'], pa_tot=totBy['Phasen-Ebenen-Modell'];
+  document.getElementById('breakdown').innerHTML=`
+    <div class="brow"><span>Verantwortungsmodell</span><span>${va_ok} / ${va_tot}</span></div>
+    <div class="brow"><span>Phasen-Ebenen-Modell</span><span>${pa_ok} / ${pa_tot}</span></div>`;
+}
+
+function restart(){ show('s-start'); }
+</script>
+</body>
+</html>
