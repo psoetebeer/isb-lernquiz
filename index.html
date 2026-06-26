@@ -68,7 +68,39 @@
       transition: opacity .15s;
     }
     .btn-primary:hover { opacity: .82; }
-    .start-meta { margin-top: 20px; font-size: 11px; color: #bbb; font-style: italic; }
+    .btn-primary:disabled { opacity: .35; cursor: default; }
+    .select-label {
+      font-family: Arial, sans-serif; font-size: 10px; font-weight: bold;
+      letter-spacing: 2.5px; color: #aaa; margin-bottom: 14px;
+    }
+    .model-choices { display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
+    .btn-model {
+      display: flex; align-items: center; gap: 14px;
+      padding: 14px 20px; border-radius: 8px; cursor: pointer;
+      font-family: Arial, sans-serif; font-size: 13px; font-weight: bold;
+      border: 2px solid #d0c8b0; background: white; color: #555;
+      text-align: left; transition: border-color .15s, background .15s, color .15s;
+    }
+    .btn-model:hover { border-color: #aaa; background: #fafaf8; }
+    .btn-model .circle {
+      width: 18px; height: 18px; border-radius: 50%;
+      border: 2px solid #ccc; display: flex; align-items: center;
+      justify-content: center; flex-shrink: 0; transition: border-color .15s;
+    }
+    .btn-model .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: transparent; transition: background .15s;
+    }
+    .btn-model.sel-green { border-color: var(--green); background: var(--green-light); color: var(--green); }
+    .btn-model.sel-green .circle { border-color: var(--green); }
+    .btn-model.sel-green .dot   { background: var(--green); }
+    .btn-model.sel-blue  { border-color: var(--blue);  background: var(--blue-light);  color: var(--blue); }
+    .btn-model.sel-blue  .circle { border-color: var(--blue); }
+    .btn-model.sel-blue  .dot   { background: var(--blue); }
+    .btn-model.sel-dark  { border-color: var(--dark);  background: #f2f0eb;            color: var(--dark); }
+    .btn-model.sel-dark  .circle { border-color: var(--dark); }
+    .btn-model.sel-dark  .dot   { background: var(--dark); }
+    .start-meta { margin-top: 16px; font-size: 11px; color: #bbb; font-style: italic; }
 
     /* ── QUIZ ── */
     .quiz-top {
@@ -177,12 +209,20 @@
     <div class="start">
       <h1>Lernquiz · Modul 1</h1>
       <p class="sub">isb · Systemische OE, Change &amp; Transformation I · 2026</p>
-      <div class="badges">
-        <span class="badge bg">Verantwortungsmodell</span>
-        <span class="badge bb">Phasen-Ebenen-Modell</span>
+      <p class="select-label">MODELL WÄHLEN</p>
+      <div class="model-choices">
+        <button class="btn-model" id="btn-va" onclick="selectMode('va')">
+          <span class="circle"><span class="dot"></span></span>Verantwortungsmodell · 8 Fragen
+        </button>
+        <button class="btn-model" id="btn-pa" onclick="selectMode('pa')">
+          <span class="circle"><span class="dot"></span></span>Phasen-Ebenen-Modell · 8 Fragen
+        </button>
+        <button class="btn-model" id="btn-both" onclick="selectMode('both')">
+          <span class="circle"><span class="dot"></span></span>Beide Modelle · 12 Fragen
+        </button>
       </div>
-      <button class="btn-primary" onclick="startGame()">SPIELEN STARTEN</button>
-      <p class="start-meta">12 Fragen · ca. 5 Minuten</p>
+      <button class="btn-primary" id="btn-go" onclick="startGame()" disabled>SPIELEN STARTEN</button>
+      <p class="start-meta">Fragen · ca. 5 Minuten</p>
     </div>
   </div>
 
@@ -396,10 +436,25 @@ function prepQuestion(q){
   return {...q, opts:order.map(i=>q.o[i]), ans:order.indexOf(q.a)};
 }
 
+let selectedMode=null;
+
+function selectMode(mode){
+  selectedMode=mode;
+  const map={va:'sel-green',pa:'sel-blue',both:'sel-dark'};
+  ['va','pa','both'].forEach(k=>{
+    const el=document.getElementById('btn-'+k);
+    el.className='btn-model'+(k===mode?' '+map[k]:'');
+  });
+  document.getElementById('btn-go').disabled=false;
+}
+
 function startGame(){
-  const va=shuffle(Q.filter(x=>x.m==="Verantwortungsmodell")).slice(0,6);
-  const pa=shuffle(Q.filter(x=>x.m==="Phasen-Ebenen-Modell")).slice(0,6);
-  game=shuffle([...va,...pa]).map(prepQuestion);
+  const mode=selectedMode;
+  const va=shuffle(Q.filter(x=>x.m==="Verantwortungsmodell"));
+  const pa=shuffle(Q.filter(x=>x.m==="Phasen-Ebenen-Modell"));
+  if(mode==='va')      game=va.slice(0,8).map(prepQuestion);
+  else if(mode==='pa') game=pa.slice(0,8).map(prepQuestion);
+  else                 game=shuffle([...va.slice(0,6),...pa.slice(0,6)]).map(prepQuestion);
   idx=0; score=0; answered=false;
   okBy={"Verantwortungsmodell":0,"Phasen-Ebenen-Modell":0};
   totBy={"Verantwortungsmodell":0,"Phasen-Ebenen-Modell":0};
@@ -484,7 +539,12 @@ function results(){
     <div class="brow"><span>Phasen-Ebenen-Modell</span><span>${pa_ok} / ${pa_tot}</span></div>`;
 }
 
-function restart(){ show('s-start'); }
+function restart(){
+  selectedMode=null;
+  ['va','pa','both'].forEach(k=>document.getElementById('btn-'+k).className='btn-model');
+  document.getElementById('btn-go').disabled=true;
+  show('s-start');
+}
 </script>
 </body>
 </html>
