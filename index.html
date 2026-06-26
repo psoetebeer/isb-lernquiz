@@ -217,6 +217,20 @@
     <div class="start">
       <h1>Lernquiz · Modul 1</h1>
       <p class="sub">isb · Systemische OE, Change &amp; Transformation I · 2026</p>
+      <p class="select-label">MODELL WÄHLEN</p>
+      <div class="model-choices">
+        <button class="btn-model" id="btn-va" onclick="selectMode('va')">
+          <span class="circle"><span class="dot"></span></span>Verantwortungsmodell · 8 Fragen
+        </button>
+        <button class="btn-model" id="btn-pa" onclick="selectMode('pa')">
+          <span class="circle"><span class="dot"></span></span>Phasen-Ebenen-Modell · 8 Fragen
+        </button>
+        <button class="btn-model" id="btn-both" onclick="selectMode('both')">
+          <span class="circle"><span class="dot"></span></span>Beide Modelle · 12 Fragen
+        </button>
+      </div>
+      <button class="btn-primary" id="btn-go" onclick="startGame()" disabled>SPIELEN STARTEN</button>
+      <p class="start-meta">Fragen · ca. 5 Minuten</p>
       <div class="model-previews">
         <div class="preview-card">
 <svg viewBox="0 0 800 548" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;">
@@ -348,20 +362,7 @@
 </svg>
         </div>
       </div>
-      <p class="select-label">MODELL WÄHLEN</p>
-      <div class="model-choices">
-        <button class="btn-model" id="btn-va" onclick="selectMode('va')">
-          <span class="circle"><span class="dot"></span></span>Verantwortungsmodell · 8 Fragen
-        </button>
-        <button class="btn-model" id="btn-pa" onclick="selectMode('pa')">
-          <span class="circle"><span class="dot"></span></span>Phasen-Ebenen-Modell · 8 Fragen
-        </button>
-        <button class="btn-model" id="btn-both" onclick="selectMode('both')">
-          <span class="circle"><span class="dot"></span></span>Beide Modelle · 12 Fragen
-        </button>
       </div>
-      <button class="btn-primary" id="btn-go" onclick="startGame()" disabled>SPIELEN STARTEN</button>
-      <p class="start-meta">Fragen · ca. 5 Minuten</p>
     </div>
   </div>
 
